@@ -2,7 +2,7 @@ import random
 import time
 import pygame
 from pygame.locals import QUIT
-
+import pygame.mixer
 class City:
     def __init__(self, size):
         self.size = size
@@ -19,6 +19,8 @@ class PublicTransportVehicle:
         self.blocked_streets = blocked_streets
         self.passengers = []
         self.status = "waiting"
+        self.bus_departure_sound_path = "C:/Users/aders/Desktop/bus_stop.wav"
+        self.bus_departure_sound = pygame.mixer.Sound(self.bus_departure_sound_path)
 
     def move(self, city, num_positions_to_move):
         for _ in range(num_positions_to_move):
@@ -57,10 +59,12 @@ class PublicTransportVehicle:
             print(f"Vehicle {self.vehicle_id}: No alternative routes available. Staying in the current position.")
 
     def handle_stop_arrival(self, city):
+        
         self.next_stop = (self.next_stop + 1) % len(self.route)
         print(f"Vehicle {self.vehicle_id} has arrived at stop {self.next_stop}.")
         if self.next_stop == 0:
             self.complete_route()
+
 
     def complete_route(self):
         print(f"Vehicle {self.vehicle_id} has completed its route.")
@@ -180,27 +184,70 @@ class Simulation:
             # Draw roads
             for y, row in enumerate(self.city.roads):
                 for x, road in enumerate(row):
-                    color = (0, 0, 0) if road else (255, 255, 255)
+                    color = (0, 0, 0) if road else (122, 136, 142)
                     
                     pygame.draw.rect(screen, color, (x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
 
             # Draw bus stops
+            font = pygame.font.Font(None, 18)  # You can adjust the font size and style
+
             for stop in self.city.bus_stops:
-                pygame.draw.circle(screen, (0, 0, 255), (stop[0] * CELL_SIZE + CELL_SIZE // 2, stop[1] * CELL_SIZE + CELL_SIZE // 2), 10)
+                stop_center = (stop[0] * CELL_SIZE + CELL_SIZE // 2, stop[1] * CELL_SIZE + CELL_SIZE // 2)
+                
+                # Draw a circle for the bus stop
+                pygame.draw.circle(screen, (0, 0, 255), stop_center, 10)
+                
+                # Render and blit text on the screen
+                stop_text = font.render("Bus Stop", True, (255, 255, 255))
+                text_rect = stop_text.get_rect(center=(stop_center[0], stop_center[1] + 20))  # Adjust Y-coordinate for text placement
+                screen.blit(stop_text, text_rect)
 
             # Draw blocked_streets
+            font2 = pygame.font.Font(None,18 )  # You can adjust the font size and style
+
             for block in self.city.blocked_streets:
+                block_center = (block[0] * CELL_SIZE + CELL_SIZE // 2, block[1] * CELL_SIZE + CELL_SIZE // 2)
+                
+                # Draw a rectangle for the blocked street
                 pygame.draw.rect(screen, (180, 180, 180), (block[0] * CELL_SIZE, block[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                
+                # Render and blit text on the screen
+                block_name = font2.render("Blocked Street", True, (0, 0, 0))
+                text_rect = block_name.get_rect(center=(block_center[0], block_center[1] + 20 // 2))  # Adjust Y-coordinate for text placement
+                screen.blit(block_name, text_rect)
 
 
 
-            # Draw vehicles
+           # Inside the draw_city method, after drawing vehicles
+            font = pygame.font.Font(None, 20)  # You can adjust the font size and style
+
             for vehicle in self.vehicles:
-                pygame.draw.rect(screen, (255, 0, 0), (vehicle.position[0] * CELL_SIZE, vehicle.position[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+             vehicle_center = (vehicle.position[0] * CELL_SIZE + CELL_SIZE // 2, vehicle.position[1] * CELL_SIZE + CELL_SIZE // 2)
+            
+            # Draw a rectangle for the vehicle
+             pygame.draw.rect(screen, (255, 0, 0), (vehicle.position[0] * CELL_SIZE, vehicle.position[1] * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+            
+            # Render and blit text on the screen
+             vehicle_name = font.render(f"Bus {vehicle.vehicle_id}", True, (0, 0, 0))
+             text_rect = vehicle_name.get_rect(center=(vehicle_center[0], vehicle_center[1] + 20 // 2))  # Adjust Y-coordinate for text placement
+             screen.blit(vehicle_name, text_rect)
+
 
             # Draw passengers
+            # Inside the draw_city method, after drawing passengers
+            font = pygame.font.Font(None, 20)  # You can adjust the font size and style
+
             for passenger in self.passengers:
-                pygame.draw.circle(screen, (0, 255, 0), (passenger.position[0] * CELL_SIZE + CELL_SIZE // 2, passenger.position[1] * CELL_SIZE + CELL_SIZE // 2), 5)
+                passenger_center = (passenger.position[0] * CELL_SIZE + CELL_SIZE // 2, passenger.position[1] * CELL_SIZE + CELL_SIZE // 2)
+                
+                # Draw a circle for the passenger with an increased size
+                pygame.draw.circle(screen, (0, 255, 0), passenger_center, 28)  # Adjust the circle size as needed
+                
+                # Render and blit text on the screen
+                passenger_name = font.render(f"Passenger {passenger.passenger_id}", True, (255, 255, 255))
+                text_rect = passenger_name.get_rect(center=(passenger_center[0], passenger_center[1] + CELL_SIZE // 2))  # Adjust Y-coordinate for text placement
+                screen.blit(passenger_name, text_rect)
+
 
             pygame.display.flip()
             clock.tick(1)    # Limit frames per second
@@ -223,7 +270,7 @@ start_stop = random.choice(city.bus_stops)
 timetable = random.sample(city.bus_stops, len(city.bus_stops))
 timetable1 = random.sample(city.bus_stops, len(city.bus_stops))
 
-
+bus_stop_sound = pygame.mixer.Sound("bus.wav") 
 
 blocked_streets = (random.randint(0, city_size - 1), random.randint(0, city_size - 1))
 blocked_streets2 = (random.randint(0, city_size - 1), random.randint(0, city_size - 1))
@@ -254,4 +301,4 @@ passenger1 = Passenger(passenger_id=1, origin=(1, 1), destination=(6, 6), blocke
 passenger2 = Passenger(passenger_id=2, origin=(2, 2), destination=(5, 5), blocked_streets=city.blocked_streets)
 
 # Run the simulation
-run_simulation(city, vehicles, [passenger1, passenger2], num_steps=20)
+run_simulation(city, vehicles, [passenger1, passenger2], num_steps=40)
