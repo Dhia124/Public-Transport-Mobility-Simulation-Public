@@ -149,7 +149,7 @@ class Simulation:
      # Move public transport vehicles
             for vehicle in self.vehicles:
                 num_positions_to_move = random.randint(1, 4)
-                vehicle.move(self.city, num_positions_to_move)
+                vehicle.move(self.city, 1)
                 print(f"Vehicle {vehicle.vehicle_id} Position: {vehicle.position}")
                 for passenger in vehicle.passengers:
                     passenger.position = vehicle.position
